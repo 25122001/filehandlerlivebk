@@ -6,7 +6,6 @@ const mongoose = require("mongoose");
 const multer = require("multer");
 const cors = require("cors");
 const { GridFSBucket } = require("mongodb");
-const { encrypt, decrypt } = require("./utils/encryption");
 
 const app = express();
 app.use(cors());
@@ -53,11 +52,11 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     const uploadStream = bucket.openUploadStream(uniqueName, {
       metadata: {
-  title: encrypt(req.body.title),
-  description: encrypt(req.body.description),
-  uploadedAt: new Date(),
-  contentType: req.file.mimetype,
-},
+        title: req.body.title,
+        description: req.body.description,
+        uploadedAt: new Date(),
+        contentType: req.file.mimetype,
+      },
     });
 
     uploadStream.end(req.file.buffer);
@@ -76,38 +75,14 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 /* ================= GET ALL FILES ================= */
 app.get("/files", async (req, res) => {
   try {
-
     const files = await conn.db
       .collection("uploads.files")
       .find()
       .sort({ uploadDate: -1 })
       .toArray();
 
-    const decryptedFiles = files.map(file => {
-
-      if (file.metadata) {
-
-        try {
-          file.metadata.title = decrypt(file.metadata.title);
-        } catch {
-          file.metadata.title = file.metadata.title;
-        }
-
-        try {
-          file.metadata.description = decrypt(file.metadata.description);
-        } catch {
-          file.metadata.description = file.metadata.description;
-        }
-
-      }
-
-      return file;
-    });
-
-    res.json(decryptedFiles);
-
+    res.json(files);
   } catch (error) {
-    console.error("FILES API ERROR:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -197,11 +172,11 @@ app.put("/files/:id", upload.single("file"), async (req, res) => {
 
       const uploadStream = bucket.openUploadStream(uniqueName, {
         metadata: {
-  title: encrypt(req.body.title),
-  description: encrypt(req.body.description),
-  uploadedAt: new Date(),
-  contentType: req.file.mimetype,
-},
+          title: req.body.title,
+          description: req.body.description,
+          uploadedAt: new Date(),
+          contentType: req.file.mimetype,
+        },
       });
 
       uploadStream.end(req.file.buffer);
@@ -217,10 +192,10 @@ app.put("/files/:id", upload.single("file"), async (req, res) => {
       await conn.db.collection("uploads.files").updateOne(
         { _id: fileId },
         {
-$set: {
-  "metadata.title": encrypt(req.body.title),
-  "metadata.description": encrypt(req.body.description)
-},
+          $set: {
+            "metadata.title": req.body.title,
+            "metadata.description": req.body.description,
+          },
         }
       );
 
