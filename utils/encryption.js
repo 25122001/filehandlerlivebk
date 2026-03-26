@@ -16,6 +16,7 @@ function encrypt(text) {
   return iv.toString("hex") + ":" + encrypted;
 }
 
+
 /* ================= DECRYPT ================= */
 function decrypt(text) {
   const parts = text.split(":");
